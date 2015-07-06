@@ -17,6 +17,7 @@ public class nebot0 implements Bot {
 	//手牌
 	Card handcard[];
 	long time;
+	Card hostcard[];
 	//我
 	Player me = null;
 	//胜率
@@ -57,7 +58,7 @@ public class nebot0 implements Bot {
 			else
 				return getPreAction0();
 		}
-		else{
+		else {
 		//翻牌后策略
 			if(state.seatplayer<5&&state.getInitjetton()>50*state.bigblindbet)
 				return getAction();
@@ -79,6 +80,125 @@ public class nebot0 implements Bot {
 			return State.call;
 		return State.fold;
 	}
+
+	public int getPreflopAction()
+	{
+
+			int flag=getPower0(new int[]{handcard[0],handcard[1]},State.baseState);
+		  switch(flag){
+				case 0:
+				{
+					State.raisebet=8*state.bigblindbet;
+				  return State.raise;
+				}break;
+				case 1:
+				{
+					if((crazeplayer>1&&state.seatplayer>3)||(looseplayer>3&&state.seatplayer>2))
+					return State.call;
+				}break;
+				case 2:
+				{
+          if(hightobet-prebet>0)
+					return State.fold;
+				}break;
+
+				case 3:
+				{
+					if((crazeplayer>1&&state.seatplayer>3)||(looseplayer>3&&state.seatplayer>2))
+				  return State.call;
+				}break;
+				case 4:{
+					if(looseplayer>3&&state.seatplayer>3)
+				  return State.call;
+				}break;
+
+				case 5:
+				{
+					if((crazeplayer>1&&state.seatplayer>5)||(looseplayer>3&&state.seatplayer>3))
+				  return State.call;
+				}break;
+				case 6:{
+					if(looseplayer>3&&state.seatplayer>3)
+				  return State.call;
+				}break;
+
+				case 12:{
+					if(looseplayer>3&&state.seatplayer>4)
+				  return State.call;
+				}break;
+
+				default:break;
+			}
+		return State.fold;
+	}
+
+ public int  getflopAction(){
+
+		this.hostcard=state.hostcard;
+		int flag=getPower0(new int[]{handcard[0],handcard[1],hostcard[0],hostcard[1],hostcard[2]},State.flopState);
+		switch(flag){
+			case 0:{
+				if(state.totalpot>=2*state.bigblindbet)
+				return State.call;
+			}break;
+			case 1:{
+				if(state.totalpot>=5*state.bigblindbet)
+				return State.call;
+			}break;
+			case 7:{
+				if(state.totalpot>=3*state.bigblindbet)
+				return State.call;
+				else if(state.totalpot>=5*state.bigblindbet)
+				{
+					State.raisebet=3*state.bigblindbet;
+					return State.raise;
+				}
+			}break;
+			case 9:{
+				if(state.totalpot>=5*state.bigblindbet)
+				return State.call;
+			}break;
+
+			default:
+			break;
+		}
+
+		return State.fold;
+
+}
+public int getturnAction(){
+
+		this.hostcard=state.hostcard;
+		int flag=getPower0(new int[]{handcard[0],handcard[1],hostcard[0],hostcard[1],hostcard[2],hostcard[3]},State.turnState);
+		switch(flag){
+			case 0:{
+				if(state.totalpot>=8*state.bigblindbet)
+			return State.call;
+			else
+			return State.fold;
+
+			}break;
+			case 1:{
+			}break;
+			case 9:{
+				if(state.totalpot>=7*state.bigblindbet)
+				return State.call;
+			}break;
+			case 7:{
+				if(state.totalpot>=5*state.bigblindbet&&state.seatplayer>4)
+				return State.call;
+			}break;
+			case 11:{
+				return State.call;
+			}break;
+
+			default:break;
+		}
+
+		return State.fold;
+
+}
+
 	public int getAction0()
 	{
 		try {
@@ -91,7 +211,8 @@ public class nebot0 implements Bot {
 				}
 				else
 					return State.call;
-			}else
+			}
+			else
 			{
 				if(ev())
 					return State.call;
@@ -100,10 +221,12 @@ public class nebot0 implements Bot {
 				else
 					return State.call;
 			}
+
 		} catch (IOException e) {
 			return State.call;
 		}
 	}
+
 	//参数初始化
 	public void initArgs()
 	{

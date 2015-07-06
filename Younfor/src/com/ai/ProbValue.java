@@ -32,6 +32,126 @@ public class ProbValue {
         PokerLib.init_deck(this.deck);
         this.alivenum = numOther;
     }
+
+    //turnpower
+    public double getProb1()
+    {
+    	double small=0,equal=0,big=0;
+    	long timestart=System.currentTimeMillis();
+    	int count=0;
+    	int mycards[]=new int[hostlenght+3];
+    	int oppocards[]=new int[hostlenght+3];
+    	//我的牌加上公牌
+    	mycards[0]=hand[0];
+    	mycards[1]=hand[1];
+    	for(int i=0;i<hostlenght;i++)
+    	{
+    		mycards[i+2]=host[i];
+    		oppocards[i+2]=host[i];
+    	}
+
+    	for(int i=0;i<51;i++)
+    	{
+    		 //除去公牌重复
+			boolean repeat=false;
+			for(int k=0;k<hostlenght;k++)
+			{
+				if(host[k]==deck[i])
+				{
+					repeat=true;
+					break;
+				}
+			}
+			//去除手牌重复
+			if(hand[0]==deck[i])
+				repeat=true;
+			if(repeat)
+				continue;
+
+    		for(int j=i+1;j<52;j++)
+    		{
+    			//除去公牌重复
+    			repeat=false;
+    			for(int k=0;k<hostlenght;k++)
+    			{
+    				if(host[k]==deck[j])
+    				{
+    					repeat=true;
+    					break;
+    				}
+    			}
+    			//去除手牌重复
+    			if(hand[1]==deck[j])
+    				repeat=true;
+    			if(repeat)
+    				continue;
+
+    			//对手手牌
+    			oppocards[0]=deck[i];
+    			oppocards[1]=deck[j];
+    			//去除垃圾牌
+    			if(getPower(oppocards)<6)
+    			{
+    				continue;
+    			}
+
+          for(int i=0;i<51;i++)
+          {
+            boolean repeat=false;
+            for(int k=0;k<hostlenght;k++)
+      			{
+      				if(host[k]==deck[i])
+      				{
+      					repeat=true;
+      					break;
+      				}
+      			}
+      			//去除手牌重复
+      			if(hand[0]==deck[i])
+      				repeat=true;
+            if(hand[1]==deck[i])
+        			repeat=true;
+
+          if(oppocards[0]==deck[i])
+                repeat=true;
+           if(oppocards[1]==deck[i])
+                repeat=true;
+          if(repeat)
+            continue;
+            mycards[5]=deck[i];
+            oppocards[5]=deck[i];
+
+            double myval=getValue(mycards);
+
+            double oppoval=getValue(oppocards);
+
+            if(myval==oppoval)
+              equal++;
+            else if(myval>oppoval)
+              small++;
+            else
+              big++;
+            //超时保护
+            if(count++%20==0)
+            {
+              if(System.currentTimeMillis()-timestart>200)
+              {
+                debug("timeover");
+                return  (big+equal/2)/(big+small+equal);
+              }
+            }
+
+          }
+    		}
+
+    	}
+
+
+    	return (big+equal/2)/(big+small+equal);
+    }
+
+
+    //floppower
     public double getProb()
     {
     	double small=0,equal=0,big=0;
@@ -231,7 +351,8 @@ public class ProbValue {
   preflop:
   0表示大对，1表示小对，
   2表示非同花大牌，
-  3表示同花相连，4表示同花Ax,6表示同花隔牌，5表示同花大牌KX/QJ
+  3表示同花相连，4表示同花Ax,
+  6表示同花隔1牌、12隔2，5表示同花大牌KX/QJ
   flop:
   中小对、
   9大牌
@@ -289,12 +410,13 @@ public class ProbValue {
 
         else if((big-small)==1)//同花相连
         return 3;
-
-        else if(big-small<3) //最多相隔2
-         return 6;
+         else if(big-small==2) //最多相隔1
+          return 6;
+          else if(big-small==3) //最多相隔2
+           return 12;
       }
       else
-      return 9;
+      return 10;
     }
     //flop
     else if((curState==41)&&(cardlength==5))
@@ -338,7 +460,9 @@ public class ProbValue {
            maxpairvalue=i+2;
         }
 
-      if(pairnum==1&&maxpairvalue<maxflopvalue&&maxpairvalue>6)
+      if(pairnum==1&&maxpairvalue>=maxflopvalue)
+        return 0;
+      else if(pairnum==1&&maxpairvalue<maxflopvalue)
         return 1;  //翻牌后仅仅有一个中小对，当做小对处理
 
       else if(headtile||flushing)
@@ -388,16 +512,20 @@ public class ProbValue {
          if(((cc[0]&cc[1]&cc[2]&cc[3])!=0)||((cc[0]&cc[1]&cc[2]&cc[4])!=0)||((cc[0]&cc[1]&cc[3]&cc[4])!=0)||((cc[0]&cc[2]&cc[3]&cc[4])!=0)||(cc[1]&cc[2]&cc[3]&cc[4]))
             flushing=true;
 
-         if(pairnum==1)
+         if(pairnum==2&&big<maxflopvalue)
+          return 11;
+         else if(pairnum==1&&big>=maxflopvalue)
+         return 0;
+         else if(flushing||headtile)
+         return 7;
+         else if(pairnum==1&&big<maxflopvalue)
          return 1;
          else if(big>maxflopvalue&&small>maxflopvalue)
          return 9;
-         else if(flushing||headtile)
-         return 7;
-         else if(pairnum==2)
-         return 11;
      }
 
+     else
+      return 10;
     //river
 
   }
